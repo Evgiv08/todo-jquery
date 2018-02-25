@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>dz21</title>
+	<script src="jquery.js"></script>
+	<style>
+		form {
+			padding-left: 20px;
+		}
+		li {
+			border: 1px solid gray;
+			margin: 5px auto;
+			padding: 5px;
+			width: 500px;
+			position: relative;
+			border-radius: 4px;
+			transition: all .7s ease;
+			list-style-type: none;
+		}
+		h2 {
+			font-size: 40px;
+		}
+		.btnDel {
+			width: 37px;
+			position: absolute;
+			right: 0;
+			top: 0;
+			bottom: 0;
+		    content: "";
+		    height: 31px;
+		    background: url(img/del.jpg) left center no-repeat;
+		    background-size: 22px;
+		    background-position: 5px;
+		    outline: none;
+		}
+		.btnOk {
+			width: 37px;
+			position: absolute;
+			right: 37px;
+			top: 0;
+			bottom: 0;
+			content: "";
+		    height: 31px;
+		    background: url(img/okay.png) left center no-repeat;
+		    background-size: 30px;
+		    outline: none;
+		}
+		.liOk {
+			border: 1px solid red;
+			color: red;
+			text-decoration: line-through;
+			order: 1;
+		}
+		#list {
+			padding-left: 15px;
+			display: flex;
+		    flex-direction: column;
+		    order: initial;
+		}
+		#product {
+			width: 600px;
+			height: 30px;
+    		font-size: 30px;
+    		padding-bottom: 6px;
+    		padding-top: 5px;
+    		padding-left: 15px;
+    		border-radius: 4px;
+    		outline: none;
+    		border: 1px solid gray;
+    		text-align: center;
+		}
+		#add, #display, #save, #unload {
+			margin-top: 20px;
+			width: 105px;
+		    border-radius: 15%;
+		    height: 40px;
+		    outline:none;
+		    font-size: 19px;
+		    font-family: Arial;
+		}
+		.notShow {
+			display: none;
+		}
+		.container {
+			width: 800px;
+			margin: 0 auto;
+			text-align: center;
+			border: .5px solid gray;
+		}
+		.liOk::before {
+			position: absolute;
+		    left: 2px;
+		    top: 0;
+		    content: "";
+		    width: 30px;
+		    height: 30px;
+		    background: url(img/okay.png) left center no-repeat;
+		    background-size: 17px;
+		}
+		span {
+			font-family: Arial;
+   			font-size: 18px;
+   			display: block;
+		    margin-right: 70px;
+		    margin-left: 70px;
+		}
+	</style>
+</head>
+<body>
+	<div class="container">	
+		<h2>ToDo List</h2>
+		<form action="#">
+			<input type="text" placeholder="Введите товар" maxlength="21" id="product" autocomplete="off">
+			<div>
+				<button id="add">Add</button>
+				<button id="display">Hide/Show</button>
+				<button id="save">Save</button>
+				<button id="unload">Unload</button>
+			</div>
+		</form>
+		<div>
+			<ol id="list">
+			</ol>
+		</div>
+	</div>
+	<script>
+		var x = 1;
+
+		$('#add').on('click', function(e) {
+			e.preventDefault();
+			if ($('#product').val() === '') {
+				console.log("Введите наименование");
+			} else {
+				createList().appendTo($('#list')).find('span').text($('#product').val());
+				$('#product').val('');
+			};
+		});
+
+		function createList() {
+			$li = $('<li></li>')
+			$li.append($('<span/ contenteditable="true">'));
+			$li.append($('<div/>'));
+			$li.find('div:last').append($('<button/ class="btnOk">'));
+			$li.find('div:last').append($('<button/ class="btnDel">'));
+			return $li;
+		}
+// --------------------------------------------------
+		$('#list').on('click', function show(event) {
+			if ($(event.target).hasClass('btnOk')) {
+				$(event.target.parentNode.parentNode).toggleClass('liOk');
+				if (x === 2) {
+					$(event.target.parentNode.parentNode).toggleClass('notShow');
+				};
+			} else if ($(event.target).hasClass('btnDel')) {
+				$(event.target.parentNode.parentNode).remove();
+			};
+		})
+// ---------------------------------------------------------
+		$('#display').on('click', function(e) {
+			e.preventDefault();
+
+			if ($('li').hasClass('liOk') && $('li').hasClass('notShow')) {
+				$('li.notShow').removeClass('notShow');
+				x = 1;
+			} else if ($('li').hasClass('liOk')) {
+				$('li.liOk').addClass('notShow');
+				x = 2;
+			}
+		})
+// -----------------------------------------------------------
+		document.getElementById('save').addEventListener('click', function(e) {
+			e.preventDefault();
+			var arr = [];
+			$('li').map(function(i){
+				arr[i] = {};
+				arr[i].value = $(this).find($('span')).text();
+				if ($(this).hasClass('liOk')) {
+					arr[i].status = true;
+				} else {
+					arr[i].status = false;
+				};
+			});
+			localStorage.setItem(`saved`, JSON.stringify(arr));
+		})
+// --------------------------------------------------------------
+		document.getElementById('unload').addEventListener('click', function(e) {
+			e.preventDefault();
+			var savedArr = JSON.parse(localStorage.getItem('saved'));
+
+			checkDubl(savedArr, $('li'));
+			for (var i = 0; i < savedArr.length; i++) {
+				var saveli = createList().appendTo($('#list'));
+				saveli.find($('span:last')).text(savedArr[i].value);
+				if (savedArr[i].status) {
+					saveli.addClass('liOk');
+					if (x === 2) {
+        				saveli.toggleClass('notShow');
+        			};
+				};
+			};
+		})
+
+		function checkDubl(savedArr, saveli) {
+			var saveli = $('li');	
+			for (var j = 0; j < saveli.length; j++) {
+				for (var i = 0; i < savedArr.length; i++) {
+					if (savedArr[i].value === saveli[j].textContent) {
+						savedArr.splice(i, 1);
+					};
+				};
+			};	
+		}
+	</script>
+</body>
+</html>
